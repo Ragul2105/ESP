@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynamic Update Example</title>
+<style>
+  /* Define CSS styles */
+</style>
+</head>
+<body>
+  <div id="data-container">
+    <!-- Initial content -->
+    <p id="engine-speed">Engine Speed: </p>
+    <p id="map-sensor">MAP Sensor: </p>
+    <!-- Add more DOM elements as needed -->
+  </div>
+
+  <script>
+    // Function to update the DOM elements with new data
+    function updateData(engineSpeed, mapSensor) {
+      // Update specific DOM elements with received data
+      document.getElementById("engine-speed").textContent = "Engine Speed: " + engineSpeed;
+      document.getElementById("map-sensor").textContent = "MAP Sensor: " + mapSensor;
+      // Update other DOM elements as needed
+    }
+
+    // Initialize serial port connection
+    var serial = new SerialPort();
+
+    // Event listener to receive data from serial port
+    serial.onData(function(data) {
+      // Process received data
+      var dataArray = data.split(",");
+      if (dataArray.length === 2 && dataArray[0] === "DATA") {
+        // Extract engine speed and map sensor values
+        var engineSpeed = parseFloat(dataArray[1]);
+        var mapSensor = parseFloat(dataArray[2]);
+        // Update the DOM with new data
+        updateData(engineSpeed, mapSensor);
+      }
+    });
+
+    // Connect to the serial port
+    serial.connect()
+      .then(() => {
+        console.log("Connected to serial port");
+      })
+      .catch(error => {
+        console.error("Error connecting to serial port:", error);
+      });
+  </script>
+</body>
+</html>

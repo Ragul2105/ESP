@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linear Regression Forecast</title>
+</head>
+<body>
+    <script>
+
+        //FORCAST 1
+        // Define known x and y values
+        const knownX1 = [1000,1500/* enter known x values here */];
+        const knownY1 = [19,20/* enter known y values here */];
+        const knownX2 = [1000,1500/* enter known x values here */];
+        const knownY2 = [20,21/* enter known y values here */];
+
+        // Define the value for which you want to forecast a new y value
+        const forecastX1 = 1294/* enter the value for which you want to forecast a new y value here */;
+
+        function linearRegression(forecastX,x, y) {
+            const n = x.length;
+            let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+
+            for (let i = 0; i < n; i++) {
+                sumX += x[i];
+                sumY += y[i];
+                sumXY += x[i] * y[i];
+                sumXX += x[i] * x[i];
+            }
+
+            const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+
+            return slope * forecastX + intercept;
+        }
+
+
+        // Calculate the forecasted y value
+        const forecastedY1 = linearRegression(forecastX1,knownX1, knownY1);
+
+        // Print the forecasted y value
+        console.log("Forecasted Y:", forecastedY1);
+
+        // //FORCAST 2
+        // // Define known x and y values
+        
+
+        // Define the value for which you want to forecast a new y value
+        const forecastX2 = 1294/* enter the value for which you want to forecast a new y value here */;
+
+
+        // Calculate the forecasted y value
+        const forecastedY2 = linearRegression(forecastX2,knownX2, knownY2);
+
+        // Print the forecasted y value
+        console.log("Forecasted Y2:", forecastedY2);
+
+        //FINAL FORECAST
+        // Define known x and y values
+        const knownX3 = [80,85/* enter known x values here */];
+        const knownY3 = [forecastedY1,forecastedY2/* enter known y values here */];
+
+        // Define the value for which you want to forecast a new y value
+        const forecastX3 = 84/* enter the value for which you want to forecast a new y value here */;
+
+
+        // Calculate the forecasted y value
+        const forecastedY3 = linearRegression(forecastX3,knownX3, knownY3);
+
+        // Print the forecasted y value
+        console.log("Forecasted Y3:", forecastedY3);
+
+        
+    </script>
+</body>
+</html>

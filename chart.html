@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Serial Communication with ESP32</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <button id="connectBtn">Connect to ESP32</button>
+  <button id="closeBtn" disabled>Close Connection</button>
+  <br>
+  <br>
+  <div>
+    <label for="baudRateSelect">Select Baud Rate:</label>
+    <select id="baudRateSelect">
+      <option value="9600">9600</option>
+      <option value="115200" selected>115200</option>
+      <option value="230400">230400</option>
+      <option value="460800">460800</option>
+      <option value="921600">921600</option>
+    </select>
+  </div>
+  <canvas id="myChart" style="width: 100vw; height: 80vh;"></canvas>
+
+  <script>
+    let serialPort;
+    let receivedValues = {}; // Variable to store the received values
+
+    const connectBtn = document.getElementById('connectBtn');
+    const closeBtn = document.getElementById('closeBtn');
+    const baudRateSelect = document.getElementById('baudRateSelect');
+    const ctx = document.getElementById('myChart').getContext('2d');
+    let reader;
+    let incompleteMessage = ''; // Variable to store incomplete messages
+
+    // Chart.js initialization
+    const myChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Temperature',
+          data: [],
+          borderColor: 'rgb(255, 99, 132)',
+          tension: 0.1
+        },
+        {
+          label: 'Humidity',
+          data: [],
+          borderColor: 'rgb(54, 162, 235)',
+          tension: 0.1
+        }]
+      },
+      options: {
+        scales: {
+          x: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Time'
+            }
+          },
+          y: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Value'
+            }
+          }
+        }
+      }
+    });
+
+    connectBtn.addEventListener('click', async () => {
+      await connectToESP32();
+    });
+
+    closeBtn.addEventListener('click', async () => {
+      try {
+        if (reader) {
+          await reader.cancel();
+        }
+        await serialPort.close();
+        console.log('Connection closed');
+        connectBtn.disabled = false;
+        closeBtn.disabled = true;
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    });
+
+    async function connectToESP32() {
+      try {
+        const filters = [{ usbVendorId: 0x1A86, usbProductId: 0x55D4 }]; // Add USB vendor ID and product ID of your ESP32 board
+        const port = await navigator.serial.requestPort({ filters });
+        const baudRate = parseInt(baudRateSelect.value);
+        await port.open({ baudRate });
+        console.log(`Connected to ESP32 at ${baudRate} baud rate`);
+        serialPort = port;
+        reader = serialPort.readable.getReader();
+        readData();
+        connectBtn.disabled = true;
+        closeBtn.disabled = false;
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    }
+
+    async function readData() {
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) {
+            console.log('Reader closed.');
+            break;
+          }
+          const receivedMessage = incompleteMessage + new TextDecoder().decode(value); // Concatenate incomplete message with newly received data
+          incompleteMessage = ''; // Reset incomplete message
+          const messages = receivedMessage.split('\n'); // Split by newline characters
+          incompleteMessage = messages.pop(); // Store incomplete message for next iteration
+          for (const message of messages) {
+            parseAndStoreData(message); // Parse and store complete messages
+          }
+        }
+      } catch (err) {
+        console.error('Error reading:', err);
+      } finally {
+        reader.releaseLock();
+      }
+    }
+
+    function parseAndStoreData(message) {
+      const pairs = message.split(','); // Split message into individual data values
+      pairs.forEach(pair => {
+        const [label, dataValue] = pair.split(':'); // Split data into label and value
+        if (label && dataValue) {
+          const trimmedLabel = label.trim();
+          const trimmedDataValue = parseFloat(dataValue.trim());
+          receivedValues[trimmedLabel] = trimmedDataValue; // Store label and value in receivedValues object
+          window[trimmedLabel] = trimmedDataValue; // Create a variable with label name and assign the value
+          updateChart(trimmedLabel, trimmedDataValue); // Update the chart with new data
+        }
+      });
+    }
+
+    function updateChart(label, value) {
+      // Add new data point to the chart
+      myChart.data.labels.push(new Date().toLocaleTimeString());
+      if (label === 'Temperature') {
+        myChart.data.datasets[0].data.push(value); // Add temperature value
+      } else if (label === 'Humidity') {
+        myChart.data.datasets[1].data.push(value); // Add humidity value
+      }
+      myChart.update(); // Update the chart
+    }
+  </script>
+</body>
+</html>

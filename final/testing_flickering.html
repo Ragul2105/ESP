@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Serial Communication</title>
+  <style>
+    table {
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+        text-align: center;
+    }
+    p{
+        margin: 0;
+    }
+</style>
+</head>
+<body>
+  <button id="connectBtn" onclick="connectToSerial()">Connect to Serial Port</button>
+  <button id="disconnectBtn" onclick="disconnectFromSerial()" disabled>Disconnect</button>
+  <br><br>
+  <div>
+    <label for="baudRateSelect">Select Baud Rate:</label>
+    <select id="baudRateSelect">
+      <option value="9600">9600</option>
+      <option value="115200" selected>115200</option>
+      <option value="230400">230400</option>
+      <option value="460800">460800</option>
+      <option value="921600">921600</option>
+    </select>
+  </div>
+  <br>
+
+  <div >
+    <div id="output" style="height: 500px; width: 700px;"></div>
+    <div>
+        <label for="Max_speed_range">Max_speed_range: </label>
+        <input type="number" id="Max_speed_range" name="Max_speed_range" step="any">
+        <br><br>
+        <label for="Manifold_Absolute_Pressure_Range">Manifold_Absolute_Pressure_Range: </label>
+        <input type="number" id="Manifold_Absolute_Pressure_Range" name="Manifold_Absolute_Pressure_Range" step="any">
+        <br><br>
+        <label for="Fuel_min_range">Fuel_min_range: </label>
+        <input type="number" id="Fuel_min_range" name="Fuel_min_range" step="any">
+        <br><br>
+        <label for="Fuel_max_range">Fuel_max_range: </label>
+        <input type="number" id="Fuel_max_range" name="Fuel_max_range" step="any">
+        <br><br>
+        <label for="Speed_offset">Speed_offset: </label>
+        <input type="number" id="Speed_offset" name="Speed_offset" step="any">
+        <br><br>
+        <label for="Pressure_offset">Pressure_offset: </label>
+        <input type="number" id="Pressure_offset" name="Pressure_offset" step="any">
+        <br><br>
+        <label for="Speed_gain">Speed_gain: </label>
+        <input type="number" id="Speed_gain" name="Speed_gain" step="any">
+        <br><br>
+        <label for="Pressure_gain">Pressure_gain: </label>
+        <input type="number" id="Pressure_gain" name="Pressure_gain" step="any">
+        <br><br>
+        <label for="Atmospheric_pressure">Atmospheric_pressure: </label>
+        <input type="number" id="Atmospheric_pressure" name="Atmospheric_pressure" step="any">
+        <br><br>
+        <label for="injectorhighvalue">injectorhighvalue: </label>
+        <input type="number" id="injectorhighvalue" name="injectorhighvalue" step="any">
+        <br><br>
+        <label for="no_of_strokes">no_of_strokes: </label>
+        <input type="number" id="no_of_strokes" name="no_of_strokes" step="any"><br>
+        <br><br>
+        <label for="map_gain">map_gain: </label>
+        <input type="number" id="map_gain" name="map_gain" step="any"><br>
+        <br><br>
+        <label for="map_offset">map_offset: </label>
+        <input type="number" id="map_offset" name="map_offset" step="any"><br>
+        <br><br>
+        <label for="egt_gain">egt_gain: </label>
+        <input type="number" id="egt_gain" name="egt_gain" step="any"><br>
+        <br><br>
+        <label for="egt_offset">egt_offset: </label>
+        <input type="number" id="egt_offset" name="egt_offset" step="any"><br>
+        <br><br>
+        <label for="gain_h">gain_h: </label>
+        <input type="number" id="gain_h" name="gain_h" step="any"><br>
+        <br><br>
+        <label for="gain_l">gain_l: </label>
+        <input type="number" id="gain_l" name="gain_l" step="any"><br>
+        <br><br>
+        <label for="off_set_h">off_set_h: </label>
+        <input type="number" id="off_set_h" name="off_set_h" step="any"><br>
+        <br><br>
+        <label for="off_set_l">off_set_l: </label>
+        <input type="number" id="off_set_l" name="off_set_l" step="any"><br>
+        <br><br>
+        <label for="pressure_2nd_order_value">pressure_2nd_order_value: </label>
+        <input type="number" id="pressure_2nd_order_value" name="pressure_2nd_order_value" step="any"><br>
+        <br><br>
+        <label for="pressure_1st_order_value">pressure_1st_order_value: </label>
+        <input type="number" id="pressure_1st_order_value" name="pressure_1st_order_value" step="any"><br>
+        <br><br>
+        <label for="pressure_constant">pressure_constant: </label>
+        <input type="number" id="pressure_constant" name="pressure_constant" step="any"><br>
+        <br><br>
+        <label for="speed_2nd_order_value">speed_2nd_order_value: </label>
+        <input type="number" id="speed_2nd_order_value" name="speed_2nd_order_value" step="any"><br>
+        <br><br>
+        <label for="speed_1st_order_value">speed_1st_order_value: </label>
+        <input type="number" id="speed_1st_order_value" name="speed_1st_order_value" step="any"><br>
+        <br><br>
+        <label for="speed_constant">speed_constant: </label>
+        <input type="number" id="speed_constant" name="speed_constant" step="any"><br>
+        <br><br>
+        <label for="adc_map_gain">adc_map_gain: </label>
+        <input type="number" id="adc_map_gain" name="adc_map_gain" step="any"><br>
+        <br><br>
+        <label for="adc_map_offset">adc_map_offset: </label>
+        <input type="number" id="adc_map_offset" name="adc_map_offset" step="any"><br>
+        <br><br>
+        <label for="adc_speed_gain">adc_speed_gain: </label>
+        <input type="number" id="adc_speed_gain" name="adc_speed_gain" step="any"><br>
+        <br><br>
+        <label for="adc_speed_offset">adc_speed_offset: </label>
+        <input type="number" id="adc_speed_offset" name="adc_speed_offset" step="any"><br>
+        <br><br>
+        <label for="speed_gain_1">speed_gain_1: </label>
+        <input type="number" id="speed_gain_1" name="speed_gain_1" step="any"><br>
+        <br><br>
+        <label for="speed_offset_2">speed_offset_2: </label>
+        <input type="number" id="speed_offset_2" name="speed_offset_2" step="any"><br>
+        <br><br>
+
+    </div>
+    
+  </div>
+  
+  
+  <button id="cal_btn" onclick="sendValues()">Send Values</button>
+  <br><br>
+  <div id="result"></div>
+  <h2>First Matrix</h2>
+    <table id="myTable" border="1">
+        <!-- Original matrix will be generated here -->
+    </table>
+
+    <h2>Second Matrix</h2>
+    <table id="transformedTable" border="1">
+        <!-- Transformed matrix will be generated here -->
+    </table>
+
+    <h2>Third Matrix</h2>
+    <table id="thirdtable" border="1">
+        <!-- Transformed matrix will be generated here -->
+    </table>
+
+  <button id="matrix_button" onclick="createMatrix()">Create Matrix</button>
+  
+
+  
+
+  <script>
+
+
+    //calculation for matrix
+    // Pressure Equation
+      // var pressureequation = function(pressure2ndordervalue, manifoldabsolutepressure, atmosphericpressure, pressureoffset, pressuregain, pressureconstant) {
+      //     return ;
+      // };
+
+      // // Speed Equation
+      // var speedequation = function(speed2ndordervalue, enginespeed, speedoffset, speedgain, speedconstant) {
+      //     return ;
+      // };
+
+      // // Injectionvalue Equation
+      // function calculateInjectionValue(manifoldabsolutepressure, pressureEquation, speedEquation, enginespeed) {
+          
+      //     return injectionValue;
+      // }
+      // console.log((-0.04 * Math.pow(((110 - 100) + 0), 2)) + (4 * ((110 - 100) + 0)) - 0);
+      // console.log((-0.00003* Math.pow((200+0),2))+((0.1111*(200+0))+0));
+      // console.log(((110*36/100)*(21.02*200/100))/1000);
+      
+
+
+
+
+    let serialPort;
+    let writer;
+    let reader;
+
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const baudRateSelect = document.getElementById('baudRateSelect');
+    const outputDiv = document.getElementById('result');
+    const result = document.getElementById('output');
+    const calcbtn = document.getElementById('cal_btn');
+
+    async function connectToSerial() {
+      try {
+        const baudRate = parseInt(baudRateSelect.value);
+        
+        serialPort = await navigator.serial.requestPort();
+        await serialPort.open({ baudRate });
+        outputDiv.textContent = 'Connected to Serial Port.';
+        connectBtn.disabled = true;
+        disconnectBtn.disabled = false;
+        baudRateSelect.disabled = true;
+        calcbtn.disabled = false; // Enable the "Send Values" button
+
+        // Initialize the writer
+        writer = serialPort.writable.getWriter();
+        // Initialize the reader
+        reader = serialPort.readable.getReader();
+        readData();
+      } catch (error) {
+        console.error('Error connecting to Serial Port:', error);
+        outputDiv.textContent = 'Error connecting to Serial Port: ' + error.message;
+      }
+    }
+
+    async function disconnectFromSerial() {
+      try {
+        if (serialPort && !serialPort.readable && !serialPort.writable) {
+          outputDiv.textContent = 'Serial port is already closed.';
+          return;
+        }
+
+        if (serialPort) {
+          // Release the writer
+          if (writer) {
+            writer.releaseLock();
+            writer = null;
+          }
+
+          if (reader) {
+            await reader.cancel();
+          }
+
+          await serialPort.close();
+          outputDiv.textContent = 'Disconnected from Serial Port.';
+          connectBtn.disabled = false;
+          disconnectBtn.disabled = true;
+          baudRateSelect.disabled = false;
+          calcbtn.disabled = true;
+        } else {
+          console.error('Serial port not available.');
+        }
+      } catch (error) {
+        console.error('Error disconnecting from serial:', error);
+        outputDiv.textContent = 'Error disconnecting from serial: ' + error.message;
+      }
+    }
+
+    async function writeToSerial(data) {
+      try {
+        if (!serialPort) {
+          await connectToSerial();
+        }
+
+        if (writer) {
+          const dataArray = new TextEncoder().encode(data); // Convert string to Uint8Array
+          await writer.write(dataArray);
+        } else {
+          console.error('Serial port not available or writable.');
+          outputDiv.textContent = 'Serial port not available or writable.';
+        }
+      } catch (error) {
+        console.error('Error writing to serial:', error);
+        outputDiv.textContent = 'Error writing to serial: ' + error.message;
+      }
+    }
+
+    async function readData() {
+        try {
+            let receivedMessage = ''; // Initialize an empty string to store received data
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    console.log('Reader closed.');
+                    break;
+                }
+
+                const chunk = new TextDecoder().decode(value); // Convert received data chunk to string
+                receivedMessage += chunk; // Append the chunk to the received message
+
+                // Check if the received message contains a newline character
+                const newlineIndex = receivedMessage.indexOf('\n');
+                if (newlineIndex !== -1) {
+                    // Extract the complete message up to the newline character
+                    const completeMessage = receivedMessage.substring(0, newlineIndex + 1);
+                  
+
+                    // Reset receivedMessage for the next message
+                    receivedMessage = receivedMessage.substring(newlineIndex + 1);
+
+                    
+                    // Handle different types of messages
+                    if (completeMessage.startsWith('CONFIG_DATA:')) {
+                      const configData = completeMessage.substring('CONFIG_DATA:'.length).trim();
+                      updateInputValues(configData);
+                    }
+                    else{
+                      // Clear previous content in outputDiv
+                      result.innerHTML = '';
+
+                      // Display received data
+                      // outputDiv.innerHTML += `<p>Received Data: ${completeMessage}</p>`;
+                      parseAndStoreData(completeMessage);
+                    }
+                
+                }
+              }
+            } catch (err) {
+                console.error('Error reading:', err);
+            } finally {
+                reader.releaseLock();
+            }
+
+    }
+
+
+    function updateInputValues(configData) {
+      const values = configData.split(' ');
+      console.log(values);
+      document.getElementById('Max_speed_range').value = values[0];
+      document.getElementById('Manifold_Absolute_Pressure_Range').value = values[1];
+      document.getElementById('Fuel_min_range').value = values[2];
+      document.getElementById('Fuel_max_range').value = values[3];
+      document.getElementById('Speed_offset').value = values[4];
+      document.getElementById('Pressure_offset').value = values[5];
+      document.getElementById('Speed_gain').value = values[6];
+      document.getElementById('Pressure_gain').value = values[7];
+      document.getElementById('Atmospheric_pressure').value = values[8];
+      document.getElementById('injectorhighvalue').value = values[9];
+      document.getElementById('no_of_strokes').value = values[10];
+      document.getElementById('map_gain').value = values[11];
+      document.getElementById('map_offset').value = values[12];
+      document.getElementById('egt_gain').value = values[13];
+      document.getElementById('egt_offset').value = values[14];
+      document.getElementById('gain_h').value = values[15];
+      document.getElementById('gain_l').value = values[16];
+      document.getElementById('off_set_h').value = values[17];
+      document.getElementById('off_set_l').value = values[18];
+      document.getElementById('pressure_2nd_order_value').value = values[19];
+      document.getElementById('pressure_1st_order_value').value = values[20];
+      document.getElementById('pressure_constant').value = values[21];
+      document.getElementById('speed_2nd_order_value').value = values[22];
+      document.getElementById('speed_1st_order_value').value = values[23];
+      document.getElementById('speed_constant').value = values[24];
+      document.getElementById('adc_map_gain').value = values[25];
+      document.getElementById('adc_map_offset').value = values[26];
+      document.getElementById('adc_speed_gain').value = values[27];
+      document.getElementById('adc_speed_offset').value = values[28];
+      document.getElementById('speed_gain_1').value = values[29];
+      document.getElementById('speed_offset_2').value = values[30];
+    }
+
+
+    function parseAndStoreData(message) {
+      
+      const data = message.split(','); // Split message into individual data values
+      data.forEach(pair => {
+        const [label, dataValue] = pair.split(':'); // Split data into label and value
+        if(label==="injectorhighvalue" || label==="abEnginespeed" || label==="abMAP" || label ==="fuelpercentage" || label==="HighPWM" || label==="LowPWM" || label==="adc0" || label==="adc1" || label==="mapsensorvalue" || label==="speedsensorvalue"  ){
+          result.innerHTML += `<p> ${pair} </p>`;
+        }
+        
+        
+        
+      });
+    }
+
+
+    async function sendValues() {
+      
+        const Max_speed_range = document.getElementById('Max_speed_range').value;
+        const Manifold_Absolute_Pressure_Range = document.getElementById('Manifold_Absolute_Pressure_Range').value;
+        const Fuel_min_range = document.getElementById('Fuel_min_range').value;
+        const Fuel_max_range = document.getElementById('Fuel_max_range').value;
+        const Speed_offset = document.getElementById('Speed_offset').value;
+        const Pressure_offset = document.getElementById('Pressure_offset').value;
+        const Speed_gain = document.getElementById('Speed_gain').value;
+        const Pressure_gain = document.getElementById('Pressure_gain').value;
+        const Atmospheric_pressure = document.getElementById('Atmospheric_pressure').value;
+        const injectorhighvalue = document.getElementById('injectorhighvalue').value;
+        const no_of_strokes = document.getElementById('no_of_strokes').value;
+        const map_gain = document.getElementById('map_gain').value;
+        const map_offset = document.getElementById('map_offset').value;
+        const egt_gain = document.getElementById('egt_gain').value;
+        const egt_offset = document.getElementById('egt_offset').value;
+        const gain_h = document.getElementById('gain_h').value;
+        const gain_l = document.getElementById('gain_l').value;
+        const off_set_h = document.getElementById('off_set_h').value;
+        const off_set_l = document.getElementById('off_set_l').value;
+        const pressure_2nd_order_value = document.getElementById('pressure_2nd_order_value').value;
+        const pressure_1st_order_value = document.getElementById('pressure_1st_order_value').value;
+        const pressure_constant = document.getElementById('pressure_constant').value;
+        const speed_2nd_order_value = document.getElementById('speed_2nd_order_value').value;
+        const speed_1st_order_value = document.getElementById('speed_1st_order_value').value;
+        const speed_constant = document.getElementById('speed_constant').value;
+        const adc_map_gain = document.getElementById('adc_map_gain').value;
+        const adc_map_offset = document.getElementById('adc_map_offset').value;
+        const adc_speed_gain = document.getElementById('adc_speed_gain').value;
+        const adc_speed_offset = document.getElementById('adc_speed_offset').value;
+        const speed_gain_1 = document.getElementById('speed_gain_1').value;
+        const speed_offset_2 = document.getElementById('speed_offset_2').value;
+        console.log(`${Max_speed_range} ${Manifold_Absolute_Pressure_Range} ${Fuel_min_range} ${Fuel_max_range} ${Speed_offset} ${Pressure_offset} ${Speed_gain} ${Pressure_gain} ${Atmospheric_pressure} ${injectorhighvalue} ${no_of_strokes} ${map_gain} ${map_offset} ${egt_gain} ${egt_offset} ${gain_h} ${gain_l} ${off_set_h} ${off_set_l} ${pressure_2nd_order_value} ${pressure_1st_order_value} ${pressure_constant} ${speed_2nd_order_value} ${speed_1st_order_value} ${speed_constant} ${adc_map_gain} ${adc_map_offset} ${adc_speed_gain} ${adc_speed_offset} ${speed_gain_1} ${speed_offset_2}\n`)
+
+
+
+        const message = `${Max_speed_range} ${Manifold_Absolute_Pressure_Range} ${Fuel_min_range} ${Fuel_max_range} ${Speed_offset} ${Pressure_offset} ${Speed_gain} ${Pressure_gain} ${Atmospheric_pressure} ${injectorhighvalue} ${no_of_strokes} ${map_gain} ${map_offset} ${egt_gain} ${egt_offset} ${gain_h} ${gain_l} ${off_set_h} ${off_set_l} ${pressure_2nd_order_value} ${pressure_1st_order_value} ${pressure_constant} ${speed_2nd_order_value} ${speed_1st_order_value} ${speed_constant} ${adc_map_gain} ${adc_map_offset} ${adc_speed_gain} ${adc_speed_offset} ${speed_gain_1} ${speed_offset_2}\n`;
+
+        
+      try {
+        await writeToSerial(message);
+      } catch (error) {
+        console.error('Error sending values:', error);
+      }
+    }
+
+    
+// Define global variables to store the matrices
+var matrix = [];
+var transformedMatrix = [];
+var finalMatrix = [];
+
+function createMatrix() {
+    const Max_speed_range = parseFloat(document.getElementById('Max_speed_range').value);
+    const Manifold_Absolute_Pressure_Range = parseFloat(document.getElementById('Manifold_Absolute_Pressure_Range').value);
+    const pressure_2nd_order_value = parseFloat(document.getElementById('pressure_2nd_order_value').value);
+    const Atmospheric_pressure = parseFloat(document.getElementById('Atmospheric_pressure').value);
+    const Pressure_offset = parseFloat(document.getElementById('Pressure_offset').value);
+    const Pressure_gain = parseFloat(document.getElementById('Pressure_gain').value);
+    const pressure_constant = parseFloat(document.getElementById('pressure_constant').value);
+    const speed_2nd_order_value = parseFloat(document.getElementById('speed_2nd_order_value').value);
+    const Speed_offset = parseFloat(document.getElementById('Speed_offset').value);
+    const Speed_gain = parseFloat(document.getElementById('Speed_gain').value);
+    const speed_constant = parseFloat(document.getElementById('speed_constant').value);
+    const pressure_1st_order_value = parseFloat(document.getElementById('pressure_1st_order_value').value); // Parse as float
+    const speed_1st_order_value = parseFloat(document.getElementById('speed_1st_order_value').value); // Parse as float
+
+    var pressure_gain_final = pressure_1st_order_value * Pressure_gain;
+    var speed_gain_final = speed_1st_order_value * Speed_gain;
+
+    const speed_increment = Max_speed_range / 18;
+    const map_increment = Manifold_Absolute_Pressure_Range / 10;
+
+    var speed = 0 - speed_increment;
+
+    var table = document.getElementById("myTable");
+    table.innerHTML = "";
+
+    // Create Header Row
+    var headerRow = table.insertRow(0);
+    headerRow.insertCell(0); // Empty cell for corner
+    for (var j = 0; j < 11; j++) {
+        var headerCell = headerRow.insertCell(j + 1); // Start from index 1 to leave room for corner cell
+        headerCell.textContent = (Atmospheric_pressure + j * map_increment).toFixed(2); // Set header text
+    }
+
+    var max = Number.MIN_SAFE_INTEGER; // Initialize max to smallest possible value
+    var min = Number.MAX_SAFE_INTEGER; // Initialize min to largest possible value
+
+    for (var i = 0; i < 19; i++) {
+        speed += speed_increment;
+        var map_start = Atmospheric_pressure - map_increment;
+
+        var row = [];
+
+        // Create Header Column
+        var headerCell = table.insertRow(i + 1).insertCell(0); // Insert cell at the beginning of each row
+        headerCell.textContent = (i * speed_increment).toFixed(2); // Set header text
+
+        for (var j = 0; j < 11; j++) {
+            map_start += map_increment;
+            const pressureEquation = ((pressure_2nd_order_value * Math.pow(((map_start - Atmospheric_pressure) + Pressure_offset), 2)) + (pressure_gain_final * ((map_start - Atmospheric_pressure) + Pressure_offset)) - pressure_constant);
+            const speedEquation = ((speed_2nd_order_value * Math.pow((speed + Speed_offset), 2)) + ((speed_gain_final * (speed + Speed_offset)) + speed_constant));
+            var injectionvalue = (((map_start * pressureEquation / 100) * (speedEquation * speed / 100)) / 1000).toFixed(6);
+            if(injectionvalue<0){
+                injectionvalue = 0;
+            }
+            row.push(injectionvalue);
+            var cell = table.rows[i + 1].insertCell(j + 1); // Start from index 1 to leave room for header column
+            cell.innerHTML = `${injectionvalue}`;
+
+            // Update max and min values
+            max = Math.max(max, parseFloat(injectionvalue));
+            min = Math.min(min, parseFloat(injectionvalue));
+            
+        }
+
+        matrix.push(row);
+    }
+
+    max = Math.round(max);
+    min = Math.round(min);
+
+    // Updating the injectorhighvalue
+    document.getElementById('injectorhighvalue').value = max;
+    sendValues();
+
+    console.log("Maximum value:", max);
+    console.log("Minimum value:", min);
+    
+
+    // Create another table with transformed values
+    var transformedTable = document.getElementById("transformedTable");
+    transformedTable.innerHTML = "";
+
+    var max_percen = document.getElementById('Fuel_max_range').value;
+    var min_percen = document.getElementById('Fuel_min_range').value;
+
+    console.log(max_percen);
+    console.log(min_percen);
+
+
+    // Create Header Row
+    var transformedHeaderRow = transformedTable.insertRow(0);
+    transformedHeaderRow.insertCell(0); // Empty cell for corner
+    for (var j = 0; j < 11; j++) {
+        var headerCell = transformedHeaderRow.insertCell(j + 1); // Start from index 1 to leave room for corner cell
+        headerCell.textContent = (Atmospheric_pressure + j * map_increment).toFixed(2); // Set header text
+    }
+
+    for (var i = 0; i < 19; i++) {
+        var transformedRow = [];
+
+        // Create Header Column
+        var headerCell = transformedTable.insertRow(i + 1).insertCell(0); // Insert cell at the beginning of each row
+        headerCell.textContent = (i * speed_increment).toFixed(2); // Set header text
+
+        for (var j = 0; j < 11; j++) {
+            const transformedValue = ((max_percen - min_percen) * matrix[i][j] / (max - min)) + min_percen;
+            const roundedValue = parseFloat(transformedValue).toFixed(2);
+
+            
+            transformedRow.push(roundedValue);
+            var cell = transformedTable.rows[i + 1].insertCell(j + 1); // Start from index 1 to leave room for header column
+            cell.innerHTML = `${roundedValue}`;
+        }
+        transformedMatrix.push(transformedRow);
+    }
+
+
+
+    var thirdtable = document.getElementById("thirdtable");
+    thirdtable.innerHTML = "";
+
+    const gain_h = document.getElementById('gain_h').value;
+    const off_set_h = document.getElementById('off_set_h').value;
+
+
+
+    // Create Header Row
+    var transformedHeaderRow = thirdtable.insertRow(0);
+    transformedHeaderRow.insertCell(0); // Empty cell for corner
+    for (var j = 0; j < 11; j++) {
+        var headerCell = transformedHeaderRow.insertCell(j + 1); // Start from index 1 to leave room for corner cell
+        headerCell.textContent = (Atmospheric_pressure + j * map_increment).toFixed(2); // Set header text
+    }
+
+    for (var i = 0; i < 19; i++) {
+        var transformedRow = [];
+
+        // Create Header Column
+        var headerCell = thirdtable.insertRow(i + 1).insertCell(0); // Insert cell at the beginning of each row
+        headerCell.textContent = (i * speed_increment).toFixed(2); // Set header text
+
+        for (var j = 0; j < 11; j++) {
+            const transformedValue = (gain_h*transformedMatrix[i][j])+off_set_h;
+            const roundedValue = parseFloat(transformedValue).toFixed(2);
+
+            
+            transformedRow.push(roundedValue);
+            var cell = thirdtable.rows[i + 1].insertCell(j + 1); // Start from index 1 to leave room for header column
+            cell.innerHTML = `${roundedValue}`;
+        }
+        finalMatrix.push(transformedRow);
+    }
+    console.log(finalMatrix);
+}
+
+
+
+
+
+
+
+
+          
+          // ((pressure2ndordervalue * Math.pow(((manifoldabsolutepressure - atmosphericpressure) + pressureoffset), 2)) + (pressuregain * ((manifoldabsolutepressure - atmosphericpressure) + pressureoffset)) - pressureconstant)
+          // ((speed2ndordervalue * Math.pow((enginespeed + speedoffset), 2)) + ((speedgain * (enginespeed + speedoffset)) + speedconstant))
+          // (((manifoldabsolutepressure * pressureEquation / 100) * (speedEquation * enginespeed / 100))/1000);
+          // console.log((-0.04 * Math.pow(((110 - 100) + 0), 2)) + (4 * ((110 - 100) + 0)) - 0);
+          // console.log((-0.00003* Math.pow((200+0),2))+((0.1111*(200+0))+0));
+          // console.log(((110*36/100)*(21.02*200/100))/1000);
+          
+
+  </script>
+</body>
+</html>

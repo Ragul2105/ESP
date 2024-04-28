@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 Serial Communication</title>
+</head>
+<body>
+  <button id="connectBtn" onclick="connectToSerial()">Connect to ESP32</button>
+  <button id="disconnectBtn" onclick="disconnectFromSerial()" disabled>Disconnect</button>
+  <br><br>
+  <label for="num1">Number 1:</label>
+  <input type="number" id="num1" step="0.01" disabled>
+  <br>
+  <label for="num2">Number 2:</label>
+  <input type="number" id="num2" step="0.01" disabled>
+  <br>
+  <button id="addBtn" onclick="sendNumbers()" disabled>Add Numbers</button>
+  <br>
+  <div id="output"></div>
+
+  <script>
+    let serialPort;
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const num1Input = document.getElementById('num1');
+    const num2Input = document.getElementById('num2');
+    const addBtn = document.getElementById('addBtn');
+    const outputDiv = document.getElementById('output');
+
+    async function connectToSerial() {
+      try {
+        serialPort = await navigator.serial.requestPort({});
+        outputDiv.textContent = 'Connected to ESP32.';
+        connectBtn.disabled = true;
+        disconnectBtn.disabled = false;
+        num1Input.disabled = false;
+        num2Input.disabled = false;
+        addBtn.disabled = false; // Enable the "Add Numbers" button
+      } catch (error) {
+        console.error('Error connecting to ESP32:', error);
+        outputDiv.textContent = 'Error connecting to ESP32: ' + error.message;
+      }
+    }
+
+    async function disconnectFromSerial() {
+      try {
+        if (serialPort) {
+          await serialPort.close();
+          outputDiv.textContent = 'Disconnected from ESP32.';
+          connectBtn.disabled = false;
+          disconnectBtn.disabled = true;
+          num1Input.disabled = true;
+          num2Input.disabled = true;
+          addBtn.disabled = true;
+        } else {
+          console.error('Serial port not available.');
+        }
+      } catch (error) {
+        console.error('Error disconnecting from serial:', error);
+        outputDiv.textContent = 'Error disconnecting from serial: ' + error.message;
+      }
+    }
+
+    async function writeToSerial(data) {
+      try {
+        if (!serialPort) {
+          await connectToSerial();
+        }
+
+        if (serialPort && serialPort.writable) {
+          const writer = serialPort.writable.getWriter();
+          await writer.write(data);
+          writer.releaseLock();
+        } else {
+          console.error('Serial port not available or writable.');
+          outputDiv.textContent = 'Serial port not available or writable.';
+        }
+      } catch (error) {
+        console.error('Error writing to serial:', error);
+        outputDiv.textContent = 'Error writing to serial: ' + error.message;
+      }
+    }
+
+    function sendNumbers() {
+      const num1 = num1Input.value;
+      const num2 = num2Input.value;
+
+      if (num1 && num2) {
+        const numbers = num1 + ' ' + num2 + '\n';
+        writeToSerial(numbers);
+      } else {
+        outputDiv.textContent = 'Please enter both numbers.';
+      }
+    }
+
+    // Function to handle received data
+    async function processData(data) {
+      outputDiv.textContent = 'Received sum from ESP32: ' + data;
+    }
+
+    // Event listener for serial data
+    navigator.serial.addEventListener('data', event => {
+      const receivedData = event.data;
+      processData(receivedData);
+    });
+  </script>
+</body>
+</html>

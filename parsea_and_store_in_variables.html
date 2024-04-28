@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Serial Communication with ESP32</title>
+</head>
+<body>
+  <button id="connectBtn">Connect to ESP32</button>
+  <button id="closeBtn" disabled>Close Connection</button>
+  <br>
+  <br>
+  <div>
+    <label for="baudRateSelect">Select Baud Rate:</label>
+    <select id="baudRateSelect">
+      <option value="9600">9600</option>
+      <option value="115200" selected>115200</option>
+      <option value="230400">230400</option>
+      <option value="460800">460800</option>
+      <option value="921600">921600</option>
+    </select>
+  </div>
+  <div id="output"></div>
+
+  <script>
+    let serialPort;
+    let receivedValues = {}; // Variable to store the received values
+
+    const connectBtn = document.getElementById('connectBtn');
+    const closeBtn = document.getElementById('closeBtn');
+    const baudRateSelect = document.getElementById('baudRateSelect');
+    const outputDiv = document.getElementById('output');
+    let reader;
+
+    connectBtn.addEventListener('click', async () => {
+      await connectToESP32();
+    });
+
+    closeBtn.addEventListener('click', async () => {
+      try {
+        if (reader) {
+          await reader.cancel();
+        }
+        await serialPort.close();
+        outputDiv.innerHTML += 'Connection closed<br>';
+        connectBtn.disabled = false;
+        closeBtn.disabled = true;
+      } catch (err) {
+        console.error('Error:', err);
+        outputDiv.innerHTML += 'Failed to close connection<br>';
+      }
+    });
+
+    async function connectToESP32() {
+      try {
+        const filters = [{ usbVendorId: 0x1A86, usbProductId: 0x55D4 }]; // Add USB vendor ID and product ID of your ESP32 board
+        const port = await navigator.serial.requestPort({ filters });
+        const baudRate = parseInt(baudRateSelect.value);
+        await port.open({ baudRate });
+        outputDiv.innerHTML = `Connected to ESP32 at ${baudRate} baud rate<br>`;
+        serialPort = port;
+        reader = serialPort.readable.getReader();
+        readData();
+        connectBtn.disabled = true;
+        closeBtn.disabled = false;
+      } catch (err) {
+        console.error('Error:', err);
+        outputDiv.innerHTML = 'Failed to connect';
+      }
+    }
+
+    async function readData() {
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) {
+            console.log('Reader closed.');
+            break;
+          }
+          const receivedMessage = new TextDecoder().decode(value); // Convert received data to string
+          parseAndStoreData(receivedMessage); // Parse and store received data
+          outputDiv.innerHTML += `<p>Received Data: ${receivedMessage}</p>`; // Display received data
+        }
+      } catch (err) {
+        console.error('Error reading:', err);
+      } finally {
+        reader.releaseLock();
+      }
+    }
+
+    function parseAndStoreData(message) {
+      const data = message.split(','); // Split message into individual data values
+      data.forEach(pair => {
+        const [label, dataValue] = pair.split(':'); // Split data into label and value
+        const trimmedLabel = label.trim();
+        const trimmedDataValue = parseFloat(dataValue.trim());
+        receivedValues[trimmedLabel] = trimmedDataValue; // Store label and value in receivedValues object
+        window[trimmedLabel] = trimmedDataValue; // Create a variable with label name and assign the value
+      });
+    }
+  </script>
+</body>
+</html>

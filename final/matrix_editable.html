@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7x7 Editable Matrix with Multi-Select (Draggable)</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            border: 1px solid black;
+        }
+        td {
+            border: 1px solid black;
+            padding: 5px;
+            cursor: pointer;
+        }
+        .selected {
+            background-color: lightblue;
+        }
+    </style>
+</head>
+<body>
+    <table id="matrix">
+        <!-- Rows -->
+        <tr>
+            <!-- Columns -->
+            <td contenteditable="true">1</td><td contenteditable="true">2</td><td contenteditable="true">3</td><td contenteditable="true">4</td><td contenteditable="true">5</td><td contenteditable="true">6</td><td contenteditable="true">7</td>
+        </tr>
+        <tr>
+            <td contenteditable="true">8</td><td contenteditable="true">9</td><td contenteditable="true">10</td><td contenteditable="true">11</td><td contenteditable="true">12</td><td contenteditable="true">13</td><td contenteditable="true">14</td>
+        </tr>
+        <tr>
+            <td contenteditable="true">15</td><td contenteditable="true">16</td><td contenteditable="true">17</td><td contenteditable="true">18</td><td contenteditable="true">19</td><td contenteditable="true">20</td><td contenteditable="true">21</td>
+        </tr>
+        <tr>
+            <td contenteditable="true">22</td><td contenteditable="true">23</td><td contenteditable="true">24</td><td contenteditable="true">25</td><td contenteditable="true">26</td><td contenteditable="true">27</td><td contenteditable="true">28</td>
+        </tr>
+        <tr>
+            <td contenteditable="true">29</td><td contenteditable="true">30</td><td contenteditable="true">31</td><td contenteditable="true">32</td><td contenteditable="true">33</td><td contenteditable="true">34</td><td contenteditable="true">35</td>
+        </tr>
+        <tr>
+            <td contenteditable="true">36</td><td contenteditable="true">37</td><td contenteditable="true">38</td><td contenteditable="true">39</td><td contenteditable="true">40</td><td contenteditable="true">41</td><td contenteditable="true">42</td>
+        </tr>
+        <tr>
+            <td contenteditable="true">43</td><td contenteditable="true">44</td><td contenteditable="true">45</td><td contenteditable="true">46</td><td contenteditable="true">47</td><td contenteditable="true">48</td><td contenteditable="true">49</td>
+        </tr>
+    </table>
+
+    <button onclick="showMatrix()">Send Matrix</button>
+
+    <script>
+        let matrixData = [];
+
+        function updateMatrix() {
+            matrixData = [];
+            let tableRows = document.querySelectorAll('#matrix tr');
+            tableRows.forEach(row => {
+                let tableCells = row.querySelectorAll('td');
+                tableCells.forEach(cell => {
+                    let value = parseInt(cell.textContent);
+                    if (!isNaN(value)) {
+                        matrixData.push(value);
+                    }
+                });
+            });
+        }
+
+        function showMatrix() {
+            updateMatrix();
+            let singleLineMatrix = matrixData.join(' ');
+            console.log(singleLineMatrix);
+        }
+
+        let isDragging = false;
+        let startCell = null;
+
+        // Function to select cells when dragging
+        function selectCells(endCell) {
+            if (!startCell || !endCell) return;
+
+            let startRowIndex = startCell.parentNode.rowIndex;
+            let startCellIndex = startCell.cellIndex;
+            let endRowIndex = endCell.parentNode.rowIndex;
+            let endCellIndex = endCell.cellIndex;
+
+            let minRowIndex = Math.min(startRowIndex, endRowIndex);
+            let maxRowIndex = Math.max(startRowIndex, endRowIndex);
+            let minCellIndex = Math.min(startCellIndex, endCellIndex);
+            let maxCellIndex = Math.max(startCellIndex, endCellIndex);
+
+            for (let i = minRowIndex; i <= maxRowIndex; i++) {
+                let row = document.querySelector(`#matrix tr:nth-child(${i + 1})`);
+                for (let j = minCellIndex; j <= maxCellIndex; j++) {
+                    let cell = row.querySelector(`td:nth-child(${j + 1})`);
+                    cell.classList.add('selected');
+                }
+            }
+        }
+
+        // Add mousedown event listener to the table to start the drag selection
+        document.getElementById('matrix').addEventListener('mousedown', (event) => {
+            if (event.buttons === 1) {
+                isDragging = true;
+                startCell = event.target.closest('td');
+                selectCells(startCell);
+            }
+        });
+
+        // Add mousemove event listener to the document to continue the drag selection
+        document.addEventListener('mousemove', (event) => {
+            if (isDragging) {
+                let endCell = event.target.closest('td');
+                selectCells(endCell);
+            }
+        });
+
+        // Add mouseup event listener to the document to end the drag selection
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            startCell = null;
+        });
+
+        // Add click event listener to the document body to deselect cells when clicking outside the table
+        document.body.addEventListener('click', (event) => {
+            if (!event.target.closest('#matrix')) {
+                document.querySelectorAll('.selected').forEach(cell => {
+                    cell.classList.remove('selected');
+                });
+            }
+        });
+
+        // Add input event listener to the document body to propagate changes to all selected cells
+        document.body.addEventListener('input', (event) => {
+            let selectedCells = document.querySelectorAll('.selected');
+            if (selectedCells.length > 0) {
+                let newValue = parseInt(event.target.textContent);
+                if (!isNaN(newValue)) {
+                    selectedCells.forEach(cell => {
+                        cell.textContent = newValue;
+                    });
+                } else {
+                    // Reset content if input is not a valid integer
+                    selectedCells.forEach(cell => {
+                        cell.textContent = '';
+                    });
+                }
+            }
+        });
+
+        // Add keydown event listener to the document body to deselect cells when Enter button is pressed
+        document.body.addEventListener('keydown', (event) => {
+            if (event.keyCode === 13) {
+                document.querySelectorAll('.selected').forEach(cell => {
+                    cell.blur(); // Exit cell edit mode
+                    cell.classList.remove('selected');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
