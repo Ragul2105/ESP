@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Serial Communication</title>
+  <style>
+    table {
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: center;
+    }
+
+    p{
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <button id="connectBtn" onclick="connectToSerial()">Connect to Serial Port</button>
+  <button id="disconnectBtn" onclick="disconnectFromSerial()" disabled>Disconnect</button>
+  <br><br>
+  <div>
+    <label for="baudRateSelect">Select Baud Rate:</label>
+    <select id="baudRateSelect">
+      <option value="9600">9600</option>
+      <option value="115200" selected>115200</option>
+      <option value="230400">230400</option>
+      <option value="460800">460800</option>
+      <option value="921600">921600</option>
+    </select>
+  </div>
+  <br>
+
+  <div style="display: flex;">
+    <div id="output" style="height: 200px; width: 500px;"></div>
+    <div>
+      <label for="high_speed">High Speed: </label>
+      <input type="number" id="high_speed" name="high_speed" step="any">
+      <br><br>
+      <label for="ideal_speed">Ideal Speed: </label>
+      <input type="number" id="ideal_speed" name="ideal_speed" step="any">
+      <br><br>
+      <button id="cal_btn" onclick="sendValues()">Send Values</button>
+    </div>
+  </div>
+
+  
+  <br><br>
+  <div id="result"></div>
+  
+  <script>
+    let serialPort;
+    let writer;
+    let reader;
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const baudRateSelect = document.getElementById('baudRateSelect');
+    const outputDiv = document.getElementById('result');
+    const highSpeedInput = document.getElementById('high_speed');
+    const idealSpeedInput = document.getElementById('ideal_speed');
+    const calcbtn = document.getElementById('cal_btn');
+    const lastvaluebtn = document.getElementById('output');
+
+    async function connectToSerial() {
+      try {
+        const baudRate = parseInt(baudRateSelect.value);
+        
+        serialPort = await navigator.serial.requestPort();
+        await serialPort.open({ baudRate });
+        outputDiv.textContent = 'Connected to Serial Port.';
+        connectBtn.disabled = true;
+        disconnectBtn.disabled = false;
+        baudRateSelect.disabled = true;
+        calcbtn.disabled = false; // Enable the "Send Values" button
+
+        // Initialize the writer
+        writer = serialPort.writable.getWriter();
+        // Initialize the reader
+        reader = serialPort.readable.getReader();
+        readData();
+      } catch (error) {
+        console.error('Error connecting to Serial Port:', error);
+        outputDiv.textContent = 'Error connecting to Serial Port: ' + error.message;
+      }
+    }
+
+    async function disconnectFromSerial() {
+      try {
+        if (serialPort && !serialPort.readable && !serialPort.writable) {
+          outputDiv.textContent = 'Serial port is already closed.';
+          return;
+        }
+
+        if (serialPort) {
+          // Release the writer
+          if (writer) {
+            writer.releaseLock();
+            writer = null;
+          }
+
+          if (reader) {
+            await reader.cancel();
+          }
+
+          await serialPort.close();
+          outputDiv.textContent = 'Disconnected from Serial Port.';
+          connectBtn.disabled = false;
+          disconnectBtn.disabled = true;
+          baudRateSelect.disabled = false;
+          calcbtn.disabled = true;
+        } else {
+          console.error('Serial port not available.');
+        }
+      } catch (error) {
+        console.error('Error disconnecting from serial:', error);
+        outputDiv.textContent = 'Error disconnecting from serial: ' + error.message;
+      }
+    }
+
+    async function writeToSerial(data) {
+      try {
+        if (!serialPort) {
+          await connectToSerial();
+        }
+
+        if (writer) {
+          const dataArray = new TextEncoder().encode(data); // Convert string to Uint8Array
+          await writer.write(dataArray);
+        } else {
+          console.error('Serial port not available or writable.');
+          outputDiv.textContent = 'Serial port not available or writable.';
+        }
+      } catch (error) {
+        console.error('Error writing to serial:', error);
+        outputDiv.textContent = 'Error writing to serial: ' + error.message;
+      }
+    }
+
+    async function readData() {
+      try {
+        let receivedMessage = ''; // Initialize an empty string to store received data
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) {
+            console.log('Reader closed.');
+            break;
+          }
+
+          const chunk = new TextDecoder().decode(value); // Convert received data chunk to string
+          receivedMessage += chunk; // Append the chunk to the received message
+
+          // Check if the received message contains a newline character
+          const newlineIndex = receivedMessage.indexOf('\n');
+          if (newlineIndex !== -1) {
+            // Extract the complete message up to the newline character
+            const completeMessage = receivedMessage.substring(0, newlineIndex + 1);
+
+            // Reset receivedMessage for the next message
+            receivedMessage = receivedMessage.substring(newlineIndex + 1);
+
+            console.log(completeMessage);
+            lastvaluebtn.innerHTML='';
+
+            parseAndStoreData(completeMessage);
+            
+
+          }
+        }
+      } catch (err) {
+        console.error('Error reading:', err);
+      } finally {
+        reader.releaseLock();
+      }
+    }
+
+
+    function parseAndStoreData(completeMessage){
+        const data = completeMessage.split(',');
+            data.forEach(pair=>{
+                const [label,datavalue]=pair.split(':');
+                lastvaluebtn.innerHTML+=`<p>${pair}</p>`;
+            })
+    }
+    
+
+    async function sendValues() {
+      const highSpeed = highSpeedInput.value;
+      const idealSpeed = idealSpeedInput.value;
+      const message = `${highSpeed} ${idealSpeed}\n`;
+
+      try {
+        await writeToSerial(message);
+      } catch (error) {
+        console.error('Error sending values:', error);
+      }
+    }
+  </script>
+</body>
+</html>
