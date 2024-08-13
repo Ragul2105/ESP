@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arduino Nano Serial Communication</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #status {
+            margin: 10px 0;
+            color: red;
+        }
+
+        #dataOutput {
+            font-size: 24px;
+            margin-top: 20px;
+            color: #007bff;
+        }
+
+        input {
+            width: 300px;
+            margin: 10px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:disabled {
+            background-color: grey;
+            cursor: not-allowed;
+        }
+
+        #error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Arduino Nano Serial Communication</h1>
+    <button id="connectButton">Connect to Arduino</button>
+    <button id="disconnectButton" disabled>Disconnect</button>
+    <div id="status">Not Connected</div>
+    <h1 id="dataOutput">Waiting for data...</h1>
+    <input type="text" id="dataInput" placeholder="Enter a value (25-525)...">
+    <button id="sendButton" disabled>Send</button>
+    <div id="error"></div>
+
+    <script>
+        let port;
+        let reader;
+        let writer; // Add a writer variable
+        const connectButton = document.getElementById('connectButton');
+        const disconnectButton = document.getElementById('disconnectButton');
+        const sendButton = document.getElementById('sendButton');
+        const statusDiv = document.getElementById('status');
+        const dataOutput = document.getElementById('dataOutput');
+        const dataInput = document.getElementById('dataInput');
+        const errorDiv = document.getElementById('error');
+
+        connectButton.addEventListener('click', async () => {
+            try {
+                // Request a port and open a connection.
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+
+                statusDiv.textContent = "Connected";
+                statusDiv.style.color = "green";
+
+                reader = port.readable.getReader();
+                writer = port.writable.getWriter(); // Initialize writer
+                readData();
+
+                connectButton.disabled = true;
+                disconnectButton.disabled = false;
+                sendButton.disabled = false;
+            } catch (err) {
+                console.error('Error connecting to the serial port:', err);
+                statusDiv.textContent = "Connection Failed";
+            }
+        });
+
+        disconnectButton.addEventListener('click', async () => {
+            try {
+                if (writer) {
+                    await writer.close(); // Close the writer if it exists
+                    writer = null; // Clear the writer variable
+                }
+                if (reader) {
+                    await reader.cancel(); // Stop reading
+                    reader.releaseLock(); // Release the reader lock
+                    reader = null; // Clear the reader variable
+                }
+                if (port) {
+                    await port.close(); // Close the port
+                    port = null; // Clear the port variable
+                }
+
+                statusDiv.textContent = "Disconnected";
+                statusDiv.style.color = "red";
+
+                connectButton.disabled = false;
+                disconnectButton.disabled = true;
+                sendButton.disabled = true;
+            } catch (err) {
+                console.error('Error disconnecting from the serial port:', err);
+            }
+        });
+
+        sendButton.addEventListener('click', async () => {
+            const value = parseInt(dataInput.value, 10);
+
+            // Validate input value
+            if (value >= 25 && value <= 525) {
+                try {
+                    if (!writer) {
+                        // Reinitialize the writer if it's closed
+                        writer = port.writable.getWriter();
+                    }
+                    const encoder = new TextEncoder();
+                    const data = value + '\n';
+                    await writer.write(encoder.encode(data));
+                    dataInput.value = '';
+                    errorDiv.textContent = '';
+                } catch (err) {
+                    console.error('Error sending data:', err);
+                    errorDiv.textContent = 'Failed to send data.';
+                }
+            } else {
+                errorDiv.textContent = 'Value must be between 25 and 525.';
+            }
+        });
+
+        async function readData() {
+            let buffer = ''; // Buffer to store the incomplete message
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    console.log('Stream closed');
+                    reader.releaseLock();
+                    break;
+                }
+
+                const decoder = new TextDecoder();
+                buffer += decoder.decode(value, { stream: true });
+
+                let newlineIndex;
+                while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+                    const message = buffer.slice(0, newlineIndex).trim(); // Extract the complete message
+                    buffer = buffer.slice(newlineIndex + 1); // Remove the message from the buffer
+
+                    // Update the h1 tag with the new message
+                    dataOutput.textContent = `Base Value: ${message}`;
+                }
+            }
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (writer) {
+                writer.close(); // Close the writer if it exists
+            }
+            if (port) {
+                port.close(); 
+            }
+        });
+    </script>
+</body>
+</html>

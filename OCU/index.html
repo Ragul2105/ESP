@@ -20,6 +20,7 @@
 
   <div class="container">
     <button id="connectBtn" onclick="connectToSerial()">Connect to Serial Port</button>
+    <br>
     <button id="disconnectBtn" onclick="disconnectFromSerial()" disabled>Disconnect</button>
     <br><br>
     <!-- <div>
@@ -82,11 +83,11 @@
         connectBtn.disabled = true;
         disconnectBtn.disabled = false;
         // baudRateSelect.disabled = true;
-        calcbtn.disabled = false; // Enable the "Send Values" button
+        calcbtn.disabled = false; // Enable    the "Send Values" button
 
         // Initialize the writer
         writer = serialPort.writable.getWriter();
-        // Initialize the reader
+        // Initialize the reader  
         reader = serialPort.readable.getReader();
         readData();
       } catch (error) {
